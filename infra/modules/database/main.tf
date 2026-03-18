@@ -31,6 +31,12 @@ resource "azurerm_mssql_database" "main" {
   long_term_retention_policy {
     weekly_retention  = "P4W"
     monthly_retention = "P12M"
+    yearly_retention  = "P5Y"
+    week_of_year      = 1
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 }
 
