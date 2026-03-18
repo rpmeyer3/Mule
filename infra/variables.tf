@@ -35,7 +35,6 @@ variable "admin_username" {
 variable "admin_ssh_public_key" {
   type        = string
   description = "SSH public key for VMSS admin authentication."
-  sensitive   = true
 }
 
 variable "sql_administrator_login" {

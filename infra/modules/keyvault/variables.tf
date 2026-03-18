@@ -43,3 +43,9 @@ variable "vmss_identity_principal_id" {
   type        = string
   description = "Principal ID of the VMSS System Assigned Managed Identity."
 }
+
+variable "deployer_ip_ranges" {
+  type        = list(string)
+  description = "CIDR ranges allowed to reach Key Vault data plane (CI runner, deployer IPs)."
+  default     = []
+}

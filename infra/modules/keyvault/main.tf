@@ -21,9 +21,16 @@ resource "azurerm_key_vault" "main" {
   sku_name                      = "standard"
   purge_protection_enabled      = true
   soft_delete_retention_days    = 90
-  public_network_access_enabled = false
+  public_network_access_enabled = true
   rbac_authorization_enabled    = true
   tags                          = var.tags
+
+  network_acls {
+    default_action             = "Deny"
+    bypass                     = "AzureServices"
+    ip_rules                   = var.deployer_ip_ranges
+    virtual_network_subnet_ids = [var.kv_subnet_id]
+  }
 }
 
 # =============================================================================

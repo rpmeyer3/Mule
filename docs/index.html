@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Azure 3-Tier Architecture — threetier-prod</title>
+  <style>
+    :root {
+      --azure-blue: #0078d4;
+      --azure-dark: #004578;
+      --azure-light: #deecf9;
+      --bg: #0f1318;
+      --surface: #1a1f27;
+      --surface2: #242a35;
+      --border: #2d3748;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --green: #38b2ac;
+      --red: #fc8181;
+      --orange: #f6ad55;
+      --purple: #b794f4;
+      --gold: #ecc94b;
+      --focus: #63b3ed;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    .sr-only:not(:focus):not(:active) {
+      clip: rect(0 0 0 0);
+      clip-path: inset(50%);
+      height: 1px;
+      overflow: hidden;
+      position: absolute;
+      white-space: nowrap;
+      width: 1px;
+    }
+
+    a:focus-visible, button:focus-visible {
+      outline: 2px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    /* Skip link */
+    .skip-link {
+      position: absolute;
+      left: -9999px;
+      top: 0;
+      z-index: 999;
+      background: var(--azure-blue);
+      color: #fff;
+      padding: 0.5rem 1rem;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .skip-link:focus {
+      left: 0;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--azure-dark), var(--azure-blue));
+      padding: 2rem 1.5rem 1.5rem;
+      text-align: center;
+    }
+    header h1 {
+      font-size: clamp(1.4rem, 3vw, 2.2rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    header p {
+      color: var(--azure-light);
+      margin-top: 0.3rem;
+      font-size: 0.95rem;
+    }
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
+      margin-top: 1rem;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .badge--blue  { background: rgba(0,120,212,0.25); color: #7ec8f2; }
+    .badge--green { background: rgba(56,178,172,0.25); color: var(--green); }
+    .badge--gold  { background: rgba(236,201,75,0.2);  color: var(--gold); }
+
+    main { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+
+    /* ── Diagram section ── */
+    .diagram-section { margin-bottom: 2.5rem; }
+    .diagram-section h2 {
+      text-align: center;
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      font-weight: 600;
+    }
+
+    /* SVG diagram */
+    .diagram-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      overflow-x: auto;
+    }
+    .diagram-wrap svg { display: block; margin: 0 auto; }
+
+    /* ── Cards ── */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      transition: border-color 0.2s;
+    }
+    .card:hover, .card:focus-within { border-color: var(--azure-blue); }
+    .card h3 {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1rem;
+      margin-bottom: 0.6rem;
+    }
+    .card h3 .icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .card ul { list-style: none; }
+    .card li {
+      padding: 0.2rem 0;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+    .card li::before {
+      content: "›";
+      margin-right: 0.45rem;
+      color: var(--azure-blue);
+      font-weight: 700;
+    }
+
+    /* icon colours */
+    .icon--net  { background: rgba(0,120,212,0.2); color: var(--azure-blue); }
+    .icon--waf  { background: rgba(252,129,129,0.18); color: var(--red); }
+    .icon--comp { background: rgba(56,178,172,0.2); color: var(--green); }
+    .icon--db   { background: rgba(183,148,244,0.2); color: var(--purple); }
+    .icon--kv   { background: rgba(236,201,75,0.2); color: var(--gold); }
+    .icon--mon  { background: rgba(246,173,85,0.18); color: var(--orange); }
+    .icon--bast { background: rgba(99,179,237,0.2);  color: var(--focus); }
+
+    /* ── Traffic flow ── */
+    .flow-section { margin-top: 2.5rem; margin-bottom: 2.5rem; }
+    .flow-section h2 {
+      text-align: center;
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      font-weight: 600;
+    }
+    .flow-steps {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0;
+      justify-content: center;
+      align-items: stretch;
+    }
+    .flow-step {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+    .flow-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.8rem 1.1rem;
+      text-align: center;
+      min-width: 120px;
+    }
+    .flow-box strong { display: block; font-size: 0.85rem; }
+    .flow-box span { font-size: 0.75rem; color: var(--muted); }
+    .flow-arrow {
+      width: 40px;
+      text-align: center;
+      font-size: 1.2rem;
+      color: var(--azure-blue);
+      flex-shrink: 0;
+    }
+
+    /* ── NSG table ── */
+    .nsg-section { margin-top: 2.5rem; }
+    .nsg-section h2 {
+      text-align: center;
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      font-weight: 600;
+    }
+
+    .tab-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+    .tab-btn {
+      padding: 0.4rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 0.82rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+    .tab-btn:hover { border-color: var(--azure-blue); color: var(--text); }
+    .tab-btn[aria-selected="true"] {
+      background: var(--azure-blue);
+      color: #fff;
+      border-color: var(--azure-blue);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+    th {
+      text-align: left;
+      padding: 0.65rem 0.8rem;
+      background: var(--surface2);
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.72rem;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 0.55rem 0.8rem;
+      border-bottom: 1px solid var(--border);
+    }
+    tr:last-child td { border-bottom: none; }
+    .allow { color: var(--green); font-weight: 600; }
+    .deny  { color: var(--red);   font-weight: 600; }
+
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--border);
+      margin-top: 3rem;
+    }
+    footer a { color: var(--azure-blue); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* Animations */
+    @keyframes dashMove {
+      to { stroke-dashoffset: -20; }
+    }
+    .anim-dash {
+      stroke-dasharray: 8 6;
+      animation: dashMove 1s linear infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .pulse { animation: pulse 2s ease-in-out infinite; }
+
+    /* Reflow: stack at narrow widths */
+    @media (max-width: 600px) {
+      .flow-steps { flex-direction: column; align-items: center; }
+      .flow-arrow { transform: rotate(90deg); width: auto; padding: 0.3rem 0; }
+      .flow-step { flex-direction: column; }
+    }
+
+    /* Forced colors / high contrast */
+    @media (forced-colors: active) {
+      .card, .flow-box, .diagram-wrap, .table-wrap {
+        border: 2px solid ButtonBorder;
+      }
+      .tab-btn[aria-selected="true"] {
+        background: Highlight;
+        color: HighlightText;
+      }
+      .anim-dash { animation: none; }
+    }
+  </style>
+</head>
+<body>
+
+<a href="#maincontent" class="skip-link sr-only">Skip to main content</a>
+
+<header>
+  <h1>Azure 3-Tier Secure Architecture</h1>
+  <p>threetier &middot; prod &middot; eastus2</p>
+  <div class="badge-row" aria-label="Infrastructure highlights">
+    <span class="badge badge--blue">Terraform Managed</span>
+    <span class="badge badge--green">WAF v2 + OWASP 3.2</span>
+    <span class="badge badge--gold">Entra ID Auth</span>
+  </div>
+</header>
+
+<nav aria-label="Page sections" style="text-align:center; padding: 0.8rem 0; background: var(--surface);">
+  <a href="#architecture" style="color:var(--azure-blue); text-decoration:none; margin:0 0.8rem; font-size:0.85rem; font-weight:600;">Diagram</a>
+  <a href="#resources" style="color:var(--azure-blue); text-decoration:none; margin:0 0.8rem; font-size:0.85rem; font-weight:600;">Resources</a>
+  <a href="#traffic" style="color:var(--azure-blue); text-decoration:none; margin:0 0.8rem; font-size:0.85rem; font-weight:600;">Traffic Flow</a>
+  <a href="#nsg" style="color:var(--azure-blue); text-decoration:none; margin:0 0.8rem; font-size:0.85rem; font-weight:600;">NSG Rules</a>
+</nav>
+
+<main id="maincontent" tabindex="-1">
+
+  <!-- ════════ ARCHITECTURE DIAGRAM ════════ -->
+  <section class="diagram-section" id="architecture" aria-label="Architecture diagram">
+    <h2>Architecture Overview</h2>
+    <div class="diagram-wrap">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" width="100%" height="auto" role="img" aria-label="Network architecture diagram showing Internet traffic flowing through Application Gateway WAF v2 in the web subnet, to a Linux VMSS in the app subnet, to Azure SQL via private endpoint in the database subnet, with Key Vault and Bastion in supporting subnets. All within a single Virtual Network.">
+        <!-- VNet boundary -->
+        <rect x="30" y="40" width="840" height="470" rx="16" fill="none" stroke="#2d3748" stroke-width="2" stroke-dasharray="8 4"/>
+        <text x="50" y="68" fill="#94a3b8" font-size="13" font-family="sans-serif" font-weight="600">VNet: 10.0.0.0/16</text>
+
+        <!-- Internet -->
+        <rect x="360" y="0" width="180" height="36" rx="18" fill="#1a1f27" stroke="#0078d4" stroke-width="2"/>
+        <text x="450" y="23" fill="#7ec8f2" font-size="12" font-family="sans-serif" text-anchor="middle" font-weight="600">☁ Internet</text>
+        <!-- Arrow internet → AppGW -->
+        <line x1="450" y1="36" x2="450" y2="105" stroke="#0078d4" stroke-width="2" class="anim-dash"/>
+        <polygon points="444,100 450,112 456,100" fill="#0078d4"/>
+
+        <!-- ── Web Subnet ── -->
+        <rect x="60" y="90" width="360" height="110" rx="10" fill="rgba(0,120,212,0.06)" stroke="#0078d4" stroke-width="1.5"/>
+        <text x="78" y="112" fill="#0078d4" font-size="11" font-family="sans-serif" font-weight="700">web-subnet  10.0.1.0/24</text>
+        <!-- AppGW box -->
+        <rect x="120" y="125" width="255" height="55" rx="8" fill="#1a1f27" stroke="#0078d4" stroke-width="2"/>
+        <text x="248" y="148" fill="#7ec8f2" font-size="13" font-family="sans-serif" text-anchor="middle" font-weight="700">Application Gateway (WAF v2)</text>
+        <text x="248" y="168" fill="#94a3b8" font-size="10" font-family="sans-serif" text-anchor="middle">TLS termination · OWASP 3.2 · HTTP→HTTPS redirect</text>
+
+        <!-- ── App Subnet ── -->
+        <rect x="60" y="225" width="360" height="110" rx="10" fill="rgba(56,178,172,0.06)" stroke="#38b2ac" stroke-width="1.5"/>
+        <text x="78" y="247" fill="#38b2ac" font-size="11" font-family="sans-serif" font-weight="700">app-subnet  10.0.2.0/24</text>
+        <!-- VMSS box -->
+        <rect x="120" y="260" width="255" height="55" rx="8" fill="#1a1f27" stroke="#38b2ac" stroke-width="2"/>
+        <text x="248" y="283" fill="#38b2ac" font-size="13" font-family="sans-serif" text-anchor="middle" font-weight="700">Linux VMSS (Ubuntu 22.04)</text>
+        <text x="248" y="303" fill="#94a3b8" font-size="10" font-family="sans-serif" text-anchor="middle">SSH-only · Managed Identity · Autoscale 2–5</text>
+
+        <!-- Arrow AppGW → VMSS -->
+        <line x1="248" y1="180" x2="248" y2="255" stroke="#38b2ac" stroke-width="2" class="anim-dash"/>
+        <polygon points="242,250 248,262 254,250" fill="#38b2ac"/>
+
+        <!-- ── DB Subnet ── -->
+        <rect x="60" y="360" width="360" height="110" rx="10" fill="rgba(183,148,244,0.06)" stroke="#b794f4" stroke-width="1.5"/>
+        <text x="78" y="382" fill="#b794f4" font-size="11" font-family="sans-serif" font-weight="700">db-subnet  10.0.3.0/24</text>
+        <!-- SQL box -->
+        <rect x="120" y="395" width="255" height="55" rx="8" fill="#1a1f27" stroke="#b794f4" stroke-width="2"/>
+        <text x="248" y="418" fill="#b794f4" font-size="13" font-family="sans-serif" text-anchor="middle" font-weight="700">Azure SQL (Private Endpoint)</text>
+        <text x="248" y="438" fill="#94a3b8" font-size="10" font-family="sans-serif" text-anchor="middle">TLS 1.2 · Entra ID · Zone-redundant · Audited</text>
+
+        <!-- Arrow VMSS → SQL -->
+        <line x1="248" y1="315" x2="248" y2="390" stroke="#b794f4" stroke-width="2" class="anim-dash"/>
+        <polygon points="242,385 248,397 254,385" fill="#b794f4"/>
+
+        <!-- ── KV Subnet ── -->
+        <rect x="490" y="90" width="350" height="135" rx="10" fill="rgba(236,201,75,0.05)" stroke="#ecc94b" stroke-width="1.5"/>
+        <text x="508" y="112" fill="#ecc94b" font-size="11" font-family="sans-serif" font-weight="700">kv-subnet  10.0.4.0/24</text>
+        <!-- KV box -->
+        <rect x="530" y="128" width="270" height="75" rx="8" fill="#1a1f27" stroke="#ecc94b" stroke-width="2"/>
+        <text x="665" y="153" fill="#ecc94b" font-size="13" font-family="sans-serif" text-anchor="middle" font-weight="700">Azure Key Vault</text>
+        <text x="665" y="171" fill="#94a3b8" font-size="10" font-family="sans-serif" text-anchor="middle">RBAC auth · Purge-protected · Soft-delete 90d</text>
+        <text x="665" y="189" fill="#94a3b8" font-size="10" font-family="sans-serif" text-anchor="middle">Stores: SQL password, TLS certificate</text>
+
+        <!-- Arrow AppGW ←→ KV (cert) -->
+        <line x1="375" y1="145" x2="525" y2="155" stroke="#ecc94b" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <text x="445" y="139" fill="#ecc94b" font-size="9" font-family="sans-serif" text-anchor="middle">TLS cert</text>
+
+        <!-- Arrow VMSS ←→ KV (secrets) -->
+        <line x1="375" y1="280" x2="525" y2="185" stroke="#ecc94b" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <text x="465" y="240" fill="#ecc94b" font-size="9" font-family="sans-serif" text-anchor="middle">secrets</text>
+
+        <!-- ── Bastion ── -->
+        <rect x="490" y="270" width="350" height="110" rx="10" fill="rgba(99,179,237,0.06)" stroke="#63b3ed" stroke-width="1.5"/>
+        <text x="508" y="292" fill="#63b3ed" font-size="11" font-family="sans-serif" font-weight="700">AzureBastionSubnet  10.0.5.0/26</text>
+        <!-- Bastion box -->
+        <rect x="530" y="305" width="270" height="55" rx="8" fill="#1a1f27" stroke="#63b3ed" stroke-width="2"/>
+        <text x="665" y="328" fill="#63b3ed" font-size="13" font-family="sans-serif" text-anchor="middle" font-weight="700">Azure Bastion</text>
+        <text x="665" y="348" fill="#94a3b8" font-size="10" font-family="sans-serif" text-anchor="middle">Secure SSH to VMSS · No public IPs needed</text>
+
+        <!-- Arrow Bastion → VMSS -->
+        <line x1="530" y1="335" x2="375" y2="290" stroke="#63b3ed" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <text x="460" y="320" fill="#63b3ed" font-size="9" font-family="sans-serif" text-anchor="middle">SSH</text>
+
+        <!-- ── Log Analytics ── -->
+        <rect x="490" y="410" width="350" height="60" rx="10" fill="rgba(246,173,85,0.06)" stroke="#f6ad55" stroke-width="1.5"/>
+        <rect x="530" y="420" width="270" height="40" rx="8" fill="#1a1f27" stroke="#f6ad55" stroke-width="2"/>
+        <text x="665" y="445" fill="#f6ad55" font-size="12" font-family="sans-serif" text-anchor="middle" font-weight="700">Log Analytics Workspace</text>
+
+        <!-- Small arrows to LAW -->
+        <line x1="375" y1="435" x2="525" y2="440" stroke="#f6ad55" stroke-width="1" stroke-dasharray="3 3" opacity="0.6"/>
+        <line x1="375" y1="305" x2="525" y2="430" stroke="#f6ad55" stroke-width="1" stroke-dasharray="3 3" opacity="0.4"/>
+
+        <!-- NSG shields -->
+        <text x="56" y="200" fill="#fc8181" font-size="15" font-family="sans-serif" aria-hidden="true">🛡</text>
+        <text x="56" y="335" fill="#fc8181" font-size="15" font-family="sans-serif" aria-hidden="true">🛡</text>
+        <text x="56" y="465" fill="#fc8181" font-size="15" font-family="sans-serif" aria-hidden="true">🛡</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ════════ RESOURCE CARDS ════════ -->
+  <section id="resources" aria-label="Resource details">
+    <h2 style="text-align:center; font-size:1.25rem; margin-bottom:1rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.15em; font-weight:600;">Resource Details</h2>
+    <div class="cards">
+
+      <div class="card">
+        <h3><span class="icon icon--net">N</span> Virtual Network</h3>
+        <ul>
+          <li>Address space: 10.0.0.0/16</li>
+          <li>5 subnets: web, app, db, kv, Bastion</li>
+          <li>NSG per subnet — deny-by-default</li>
+          <li>Web blocked from reaching DB directly</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="icon icon--waf">W</span> Application Gateway</h3>
+        <ul>
+          <li>SKU: WAF_v2 (autoscale 1–3)</li>
+          <li>OWASP 3.2 rule set — Prevention mode</li>
+          <li>TLS termination via Key Vault cert</li>
+          <li>HTTP → HTTPS permanent redirect</li>
+          <li>Diagnostics to Log Analytics</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="icon icon--comp">C</span> Linux VMSS</h3>
+        <ul>
+          <li>Ubuntu 22.04 LTS — Standard_B2s</li>
+          <li>SSH-only authentication (no passwords)</li>
+          <li>System-assigned Managed Identity</li>
+          <li>Autoscale: 2–5 instances (CPU thresholds)</li>
+          <li>Boot diagnostics + Log Analytics agent</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="icon icon--db">D</span> Azure SQL Database</h3>
+        <ul>
+          <li>Private Endpoint only — no public access</li>
+          <li>Minimum TLS 1.2 enforced</li>
+          <li>Entra ID (Azure AD) authentication</li>
+          <li>Zone-redundant (prod)</li>
+          <li>Short + long term backup retention</li>
+          <li>SQL audit logs → Log Analytics</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="icon icon--kv">K</span> Key Vault</h3>
+        <ul>
+          <li>RBAC authorization (no access policies)</li>
+          <li>Purge protection + 90-day soft delete</li>
+          <li>Network ACLs: deny default, allow deployer + subnets</li>
+          <li>Deployer → KV Admin role</li>
+          <li>AppGW identity → Secrets User</li>
+          <li>VMSS identity → Secrets User</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="icon icon--bast">B</span> Azure Bastion</h3>
+        <ul>
+          <li>Dedicated AzureBastionSubnet (/26)</li>
+          <li>Secure SSH to VMSS — no public IPs on VMs</li>
+          <li>Standard SKU with native client support</li>
+          <li>Full NSG: GatewayManager, LB, host-to-host</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="icon icon--mon">L</span> Log Analytics</h3>
+        <ul>
+          <li>Central workspace: PerGB2018 SKU</li>
+          <li>Collects: AppGW access + WAF logs</li>
+          <li>Collects: SQL audit logs</li>
+          <li>Collects: VMSS boot diagnostics</li>
+          <li>30-day retention</li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ════════ TRAFFIC FLOW ════════ -->
+  <section class="flow-section" id="traffic" aria-label="Traffic flow">
+    <h2>Request Traffic Flow</h2>
+    <div class="flow-steps" role="list">
+      <div class="flow-step" role="listitem">
+        <div class="flow-box"><strong>User</strong><span>HTTPS request</span></div>
+      </div>
+      <div class="flow-step" role="listitem">
+        <div class="flow-arrow" aria-hidden="true">→</div>
+        <div class="flow-box"><strong>App Gateway</strong><span>TLS termination, WAF inspection</span></div>
+      </div>
+      <div class="flow-step" role="listitem">
+        <div class="flow-arrow" aria-hidden="true">→</div>
+        <div class="flow-box"><strong>VMSS</strong><span>HTTP/80 backend processing</span></div>
+      </div>
+      <div class="flow-step" role="listitem">
+        <div class="flow-arrow" aria-hidden="true">→</div>
+        <div class="flow-box"><strong>SQL (PE)</strong><span>Private Endpoint on port 1433</span></div>
+      </div>
+    </div>
+
+    <h2 style="margin-top:2rem;">Operator Access Flow</h2>
+    <div class="flow-steps" role="list">
+      <div class="flow-step" role="listitem">
+        <div class="flow-box"><strong>Operator</strong><span>Azure Portal / CLI</span></div>
+      </div>
+      <div class="flow-step" role="listitem">
+        <div class="flow-arrow" aria-hidden="true">→</div>
+        <div class="flow-box"><strong>Bastion</strong><span>HTTPS tunnel (no VPN)</span></div>
+      </div>
+      <div class="flow-step" role="listitem">
+        <div class="flow-arrow" aria-hidden="true">→</div>
+        <div class="flow-box"><strong>VMSS</strong><span>SSH on port 22</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ NSG RULES ════════ -->
+  <section class="nsg-section" id="nsg" aria-label="Network Security Group rules">
+    <h2>NSG Rules by Subnet</h2>
+
+    <div class="tab-bar" role="tablist" aria-label="Select subnet">
+      <button class="tab-btn" role="tab" aria-selected="true" aria-controls="nsg-web" id="tab-web" type="button">Web</button>
+      <button class="tab-btn" role="tab" aria-selected="false" aria-controls="nsg-app" id="tab-app" type="button">App</button>
+      <button class="tab-btn" role="tab" aria-selected="false" aria-controls="nsg-db" id="tab-db" type="button">Database</button>
+      <button class="tab-btn" role="tab" aria-selected="false" aria-controls="nsg-kv" id="tab-kv" type="button">Key Vault</button>
+    </div>
+
+    <!-- Web NSG -->
+    <div class="table-wrap" id="nsg-web" role="tabpanel" aria-labelledby="tab-web">
+      <table>
+        <thead>
+          <tr><th>Priority</th><th>Name</th><th>Dir</th><th>Access</th><th>Proto</th><th>Ports</th><th>Source</th><th>Dest</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>100</td><td>AllowGatewayManager</td><td>In</td><td class="allow">Allow</td><td>TCP</td><td>65200-65535</td><td>GatewayManager</td><td>*</td></tr>
+          <tr><td>200</td><td>AllowHTTPHTTPS</td><td>In</td><td class="allow">Allow</td><td>TCP</td><td>80, 443</td><td>Internet</td><td>*</td></tr>
+          <tr><td>300</td><td>AllowAzureLoadBalancer</td><td>In</td><td class="allow">Allow</td><td>*</td><td>*</td><td>AzureLoadBalancer</td><td>*</td></tr>
+          <tr><td>4096</td><td>DenyAllInbound</td><td>In</td><td class="deny">Deny</td><td>*</td><td>*</td><td>*</td><td>*</td></tr>
+          <tr><td>100</td><td>DenyOutboundToDB</td><td>Out</td><td class="deny">Deny</td><td>*</td><td>*</td><td>*</td><td>db-subnet</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- App NSG -->
+    <div class="table-wrap" id="nsg-app" role="tabpanel" aria-labelledby="tab-app" hidden>
+      <table>
+        <thead>
+          <tr><th>Priority</th><th>Name</th><th>Dir</th><th>Access</th><th>Proto</th><th>Ports</th><th>Source</th><th>Dest</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>100</td><td>AllowFromWebTier</td><td>In</td><td class="allow">Allow</td><td>TCP</td><td>80, 443, 8080</td><td>web-subnet</td><td>*</td></tr>
+          <tr><td>200</td><td>AllowAzureLoadBalancer</td><td>In</td><td class="allow">Allow</td><td>*</td><td>*</td><td>AzureLoadBalancer</td><td>*</td></tr>
+          <tr><td>250</td><td>AllowBastionSSH</td><td>In</td><td class="allow">Allow</td><td>TCP</td><td>22</td><td>bastion-subnet</td><td>*</td></tr>
+          <tr><td>4096</td><td>DenyAllInbound</td><td>In</td><td class="deny">Deny</td><td>*</td><td>*</td><td>*</td><td>*</td></tr>
+          <tr><td>100</td><td>AllowOutboundToDB</td><td>Out</td><td class="allow">Allow</td><td>TCP</td><td>1433</td><td>*</td><td>db-subnet</td></tr>
+          <tr><td>150</td><td>AllowOutboundToKV</td><td>Out</td><td class="allow">Allow</td><td>TCP</td><td>443</td><td>*</td><td>kv-subnet</td></tr>
+          <tr><td>200</td><td>AllowAzureServicesOutbound</td><td>Out</td><td class="allow">Allow</td><td>TCP</td><td>443</td><td>*</td><td>AzureCloud</td></tr>
+          <tr><td>4096</td><td>DenyInternetOutbound</td><td>Out</td><td class="deny">Deny</td><td>*</td><td>*</td><td>*</td><td>Internet</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- DB NSG -->
+    <div class="table-wrap" id="nsg-db" role="tabpanel" aria-labelledby="tab-db" hidden>
+      <table>
+        <thead>
+          <tr><th>Priority</th><th>Name</th><th>Dir</th><th>Access</th><th>Proto</th><th>Ports</th><th>Source</th><th>Dest</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>100</td><td>AllowSQLFromAppTier</td><td>In</td><td class="allow">Allow</td><td>TCP</td><td>1433</td><td>app-subnet</td><td>*</td></tr>
+          <tr><td>4096</td><td>DenyAllInbound</td><td>In</td><td class="deny">Deny</td><td>*</td><td>*</td><td>*</td><td>*</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- KV NSG -->
+    <div class="table-wrap" id="nsg-kv" role="tabpanel" aria-labelledby="tab-kv" hidden>
+      <table>
+        <thead>
+          <tr><th>Priority</th><th>Name</th><th>Dir</th><th>Access</th><th>Proto</th><th>Ports</th><th>Source</th><th>Dest</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>100</td><td>AllowFromAppTier</td><td>In</td><td class="allow">Allow</td><td>TCP</td><td>443</td><td>app-subnet</td><td>*</td></tr>
+          <tr><td>110</td><td>AllowFromWebTier</td><td>In</td><td class="allow">Allow</td><td>TCP</td><td>443</td><td>web-subnet</td><td>*</td></tr>
+          <tr><td>4096</td><td>DenyAllInbound</td><td>In</td><td class="deny">Deny</td><td>*</td><td>*</td><td>*</td><td>*</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <p>Generated from Terraform configuration &middot; <a href="https://github.com">View Source on GitHub</a></p>
+  <p style="margin-top:0.3rem;">Infrastructure managed by Terraform &middot; AzureRM Provider 4.x</p>
+</footer>
+
+<script>
+  // Tab switching for NSG tables
+  document.querySelectorAll('.tab-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      // Deselect all
+      document.querySelectorAll('.tab-btn').forEach(function(b) {
+        b.setAttribute('aria-selected', 'false');
+      });
+      // Hide all panels
+      document.querySelectorAll('[role="tabpanel"]').forEach(function(p) {
+        p.hidden = true;
+      });
+      // Activate clicked tab
+      btn.setAttribute('aria-selected', 'true');
+      var panelId = btn.getAttribute('aria-controls');
+      var panel = document.getElementById(panelId);
+      if (panel) { panel.hidden = false; }
+    });
+
+    // Keyboard: arrow keys between tabs
+    btn.addEventListener('keydown', function(e) {
+      var tabs = Array.from(document.querySelectorAll('.tab-btn'));
+      var idx = tabs.indexOf(btn);
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        var next = tabs[(idx + 1) % tabs.length];
+        next.focus();
+        next.click();
+      }
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        var prev = tabs[(idx - 1 + tabs.length) % tabs.length];
+        prev.focus();
+        prev.click();
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

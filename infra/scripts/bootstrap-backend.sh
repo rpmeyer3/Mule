@@ -29,7 +29,7 @@ echo "==> Creating storage account: ${SA_NAME}"
 az storage account create \
   --resource-group "${RG_NAME}" \
   --name "${SA_NAME}" \
-  --sku Standard_LRS \
+  --sku Standard_GRS \
   --kind StorageV2 \
   --min-tls-version TLS1_2 \
   --allow-blob-public-access false \

@@ -173,6 +173,21 @@ resource "azurerm_network_security_rule" "app_allow_azure_lb" {
   network_security_group_name = azurerm_network_security_group.app.name
 }
 
+# Allow SSH from Azure Bastion (operator access to VMSS instances)
+resource "azurerm_network_security_rule" "app_allow_bastion_ssh" {
+  name                        = "AllowBastionSSH"
+  priority                    = 250
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "22"
+  source_address_prefix       = var.bastion_subnet_prefix
+  destination_address_prefix  = "*"
+  resource_group_name         = var.resource_group_name
+  network_security_group_name = azurerm_network_security_group.app.name
+}
+
 # Deny all other inbound
 resource "azurerm_network_security_rule" "app_deny_all_inbound" {
   name                        = "DenyAllInbound"
@@ -302,6 +317,63 @@ resource "azurerm_subnet_network_security_group_association" "app" {
 resource "azurerm_subnet_network_security_group_association" "db" {
   subnet_id                 = azurerm_subnet.db.id
   network_security_group_id = azurerm_network_security_group.db.id
+}
+
+# =============================================================================
+# Key Vault Subnet NSG
+# =============================================================================
+resource "azurerm_network_security_group" "kv" {
+  name                = "${var.project_name}-${var.environment}-kv-nsg"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  tags                = var.tags
+}
+
+resource "azurerm_network_security_rule" "kv_allow_from_app" {
+  name                        = "AllowFromAppTier"
+  priority                    = 100
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "443"
+  source_address_prefix       = var.app_subnet_prefix
+  destination_address_prefix  = "*"
+  resource_group_name         = var.resource_group_name
+  network_security_group_name = azurerm_network_security_group.kv.name
+}
+
+resource "azurerm_network_security_rule" "kv_allow_from_web" {
+  name                        = "AllowFromWebTier"
+  priority                    = 110
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "443"
+  source_address_prefix       = var.web_subnet_prefix
+  destination_address_prefix  = "*"
+  resource_group_name         = var.resource_group_name
+  network_security_group_name = azurerm_network_security_group.kv.name
+}
+
+resource "azurerm_network_security_rule" "kv_deny_all_inbound" {
+  name                        = "DenyAllInbound"
+  priority                    = 4096
+  direction                   = "Inbound"
+  access                      = "Deny"
+  protocol                    = "*"
+  source_port_range           = "*"
+  destination_port_range      = "*"
+  source_address_prefix       = "*"
+  destination_address_prefix  = "*"
+  resource_group_name         = var.resource_group_name
+  network_security_group_name = azurerm_network_security_group.kv.name
+}
+
+resource "azurerm_subnet_network_security_group_association" "kv" {
+  subnet_id                 = azurerm_subnet.kv.id
+  network_security_group_id = azurerm_network_security_group.kv.id
 }
 
 # =============================================================================
@@ -468,11 +540,31 @@ resource "azurerm_application_gateway" "main" {
     }
   }
 
-  waf_configuration {
-    enabled          = true
-    firewall_mode    = "Prevention"
-    rule_set_type    = "OWASP"
-    rule_set_version = "3.2"
+  firewall_policy_id = azurerm_web_application_firewall_policy.main.id
+}
+
+# =============================================================================
+# WAF Policy (standalone — required for AzureRM 4.x)
+# =============================================================================
+resource "azurerm_web_application_firewall_policy" "main" {
+  name                = "${local.appgw_name}-waf-policy"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  tags                = var.tags
+
+  policy_settings {
+    enabled                     = true
+    mode                        = "Prevention"
+    request_body_check          = true
+    max_request_body_size_in_kb = 128
+    file_upload_limit_in_mb     = 100
+  }
+
+  managed_rules {
+    managed_rule_set {
+      type    = "OWASP"
+      version = "3.2"
+    }
   }
 }
 

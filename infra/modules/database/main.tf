@@ -51,8 +51,8 @@ resource "azurerm_mssql_database" "main" {
 # SQL Server Auditing (sent to Log Analytics)
 # =============================================================================
 resource "azurerm_mssql_server_extended_auditing_policy" "main" {
-  server_id              = azurerm_mssql_server.main.id
-  log_monitoring_enabled = true
+  server_id = azurerm_mssql_server.main.id
+  enabled   = true
 }
 
 resource "azurerm_monitor_diagnostic_setting" "sql" {

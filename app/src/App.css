@@ -1,0 +1,440 @@
+:root {
+  --azure-blue: #0078d4;
+  --azure-dark: #004578;
+  --azure-light: #deecf9;
+  --bg: #0f1318;
+  --surface: #1a1f27;
+  --surface2: #242a35;
+  --border: #2d3748;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --green: #38b2ac;
+  --red: #fc8181;
+  --orange: #f6ad55;
+  --purple: #b794f4;
+  --gold: #ecc94b;
+  --focus: #63b3ed;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ── Skip link ── */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 999;
+  background: var(--azure-blue);
+  color: #fff;
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  font-weight: 600;
+}
+.skip-link:focus {
+  left: 0;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ── Header ── */
+header {
+  background: linear-gradient(135deg, var(--azure-dark), var(--azure-blue));
+  padding: 2rem 1.5rem 1.5rem;
+  text-align: center;
+}
+header h1 {
+  font-size: clamp(1.4rem, 3vw, 2.2rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+header p {
+  color: var(--azure-light);
+  margin-top: 0.3rem;
+  font-size: 0.95rem;
+}
+
+.badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.badge--blue {
+  background: rgba(0, 120, 212, 0.25);
+  color: #7ec8f2;
+}
+.badge--green {
+  background: rgba(56, 178, 172, 0.25);
+  color: var(--green);
+}
+.badge--gold {
+  background: rgba(236, 201, 75, 0.2);
+  color: var(--gold);
+}
+
+/* ── Nav ── */
+nav {
+  text-align: center;
+  padding: 0.8rem 0;
+  background: var(--surface);
+}
+nav a {
+  color: var(--azure-blue);
+  text-decoration: none;
+  margin: 0 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+nav a:hover {
+  text-decoration: underline;
+}
+
+/* ── Main ── */
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+/* ── Diagram ── */
+.diagram-section {
+  margin-bottom: 2.5rem;
+}
+.diagram-section h2,
+.flow-section h2,
+.nsg-section h2,
+#resources > h2 {
+  text-align: center;
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-weight: 600;
+}
+.diagram-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  overflow-x: auto;
+}
+.architecture-svg {
+  display: block;
+  margin: 0 auto;
+  width: 100%;
+  height: auto;
+}
+
+/* SVG node hover */
+.resource-node {
+  cursor: pointer;
+}
+.connection-active {
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+/* ── Detail panel ── */
+.detail-panel {
+  background: var(--surface);
+  border: 1px solid var(--azure-blue);
+  border-radius: 10px;
+  padding: 1.25rem;
+  margin-bottom: 2rem;
+}
+.detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.detail-header h2 {
+  font-size: 1.1rem;
+  text-align: left;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text);
+}
+.detail-header button {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.detail-header button:hover {
+  color: var(--text);
+  border-color: var(--text);
+}
+.detail-headline {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0.5rem 0;
+}
+.detail-panel ul {
+  list-style: none;
+  margin: 0.5rem 0;
+}
+.detail-panel li {
+  padding: 0.2rem 0;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+.detail-panel li::before {
+  content: "\203A";
+  margin-right: 0.45rem;
+  color: var(--azure-blue);
+  font-weight: 700;
+}
+.detail-tf {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: 0.5rem;
+}
+.detail-tf code {
+  background: var(--surface2);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.78rem;
+}
+
+/* ── Resource cards ── */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.25rem;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition: border-color 0.2s;
+}
+.card:hover,
+.card:focus-visible {
+  border-color: var(--azure-blue);
+}
+.card--active {
+  border-color: var(--azure-blue);
+  background: rgba(0, 120, 212, 0.08);
+}
+.card h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  margin-bottom: 0.4rem;
+}
+.card .icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+.card-sub {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-bottom: 0.3rem;
+}
+.card-headline {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+/* ── Traffic flow ── */
+.flow-section {
+  margin-top: 2.5rem;
+  margin-bottom: 2.5rem;
+}
+.flow-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  justify-content: center;
+  align-items: stretch;
+}
+.flow-step {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.flow-box {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.8rem 1.1rem;
+  text-align: center;
+  min-width: 120px;
+}
+.flow-box strong {
+  display: block;
+  font-size: 0.85rem;
+}
+.flow-box span {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.flow-arrow {
+  width: 40px;
+  text-align: center;
+  font-size: 1.2rem;
+  color: var(--azure-blue);
+  flex-shrink: 0;
+}
+
+/* ── NSG section ── */
+.nsg-section {
+  margin-top: 2.5rem;
+}
+.tab-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+.tab-btn {
+  padding: 0.4rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.82rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+.tab-btn:hover {
+  border-color: var(--azure-blue);
+  color: var(--text);
+}
+.tab-btn[aria-selected="true"] {
+  background: var(--azure-blue);
+  color: #fff;
+  border-color: var(--azure-blue);
+}
+.table-wrap {
+  overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+th {
+  text-align: left;
+  padding: 0.65rem 0.8rem;
+  background: var(--surface2);
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  border-bottom: 1px solid var(--border);
+}
+td {
+  padding: 0.55rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+}
+tr:last-child td {
+  border-bottom: none;
+}
+.allow {
+  color: var(--green);
+  font-weight: 600;
+}
+.deny {
+  color: var(--red);
+  font-weight: 600;
+}
+
+/* ── Footer ── */
+footer {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  border-top: 1px solid var(--border);
+  margin-top: 3rem;
+}
+
+/* ── Reflow at narrow widths ── */
+@media (max-width: 600px) {
+  .flow-steps {
+    flex-direction: column;
+    align-items: center;
+  }
+  .flow-arrow {
+    transform: rotate(90deg);
+    width: auto;
+    padding: 0.3rem 0;
+  }
+  .flow-step {
+    flex-direction: column;
+  }
+}
+
+/* ── Forced colors / high contrast ── */
+@media (forced-colors: active) {
+  .card,
+  .flow-box,
+  .diagram-wrap,
+  .table-wrap,
+  .detail-panel {
+    border: 2px solid ButtonBorder;
+  }
+  .tab-btn[aria-selected="true"] {
+    background: Highlight;
+    color: HighlightText;
+  }
+  .badge {
+    border: 1px solid ButtonBorder;
+  }
+  .detail-header button {
+    border: 1px solid ButtonBorder;
+  }
+}
