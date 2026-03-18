@@ -317,14 +317,19 @@ resource "azurerm_public_ip" "appgw" {
 }
 
 locals {
-  appgw_name                = "${var.project_name}-${var.environment}-appgw"
-  frontend_ip_config_name   = "appgw-frontend-ip"
-  frontend_port_name        = "appgw-frontend-port"
-  backend_pool_name         = "appgw-backend-pool"
-  http_setting_name         = "appgw-http-setting"
-  listener_name             = "appgw-http-listener"
-  request_routing_rule_name = "appgw-routing-rule"
-  gateway_ip_config_name    = "appgw-gateway-ip"
+  appgw_name                     = "${var.project_name}-${var.environment}-appgw"
+  frontend_ip_config_name        = "appgw-frontend-ip"
+  frontend_port_http_name        = "appgw-frontend-port-http"
+  frontend_port_https_name       = "appgw-frontend-port-https"
+  backend_pool_name              = "appgw-backend-pool"
+  http_setting_name              = "appgw-http-setting"
+  https_listener_name            = "appgw-https-listener"
+  http_listener_name             = "appgw-http-listener"
+  https_routing_rule_name        = "appgw-https-routing-rule"
+  http_redirect_routing_rule_name = "appgw-http-redirect-rule"
+  redirect_config_name           = "http-to-https-redirect"
+  ssl_cert_name                  = "appgw-kv-tls-cert"
+  gateway_ip_config_name         = "appgw-gateway-ip"
 }
 
 resource "azurerm_application_gateway" "main" {
@@ -343,6 +348,15 @@ resource "azurerm_application_gateway" "main" {
     max_capacity = 3
   }
 
+  # User-Assigned Identity for Key Vault certificate access
+  dynamic "identity" {
+    for_each = var.appgw_identity_id != "" ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [var.appgw_identity_id]
+    }
+  }
+
   gateway_ip_configuration {
     name      = local.gateway_ip_config_name
     subnet_id = azurerm_subnet.web.id
@@ -354,14 +368,20 @@ resource "azurerm_application_gateway" "main" {
   }
 
   frontend_port {
-    name = local.frontend_port_name
+    name = local.frontend_port_http_name
     port = 80
+  }
+
+  frontend_port {
+    name = local.frontend_port_https_name
+    port = 443
   }
 
   backend_address_pool {
     name = local.backend_pool_name
   }
 
+  # TLS termination at AppGW — backend stays on HTTP/80
   backend_http_settings {
     name                  = local.http_setting_name
     cookie_based_affinity = "Disabled"
@@ -370,20 +390,82 @@ resource "azurerm_application_gateway" "main" {
     request_timeout       = 30
   }
 
+  # TLS certificate from Key Vault (when configured)
+  dynamic "ssl_certificate" {
+    for_each = var.tls_certificate_secret_id != "" ? [1] : []
+    content {
+      name                = local.ssl_cert_name
+      key_vault_secret_id = var.tls_certificate_secret_id
+    }
+  }
+
+  # HTTPS listener (primary — when cert is available)
+  dynamic "http_listener" {
+    for_each = var.tls_certificate_secret_id != "" ? [1] : []
+    content {
+      name                           = local.https_listener_name
+      frontend_ip_configuration_name = local.frontend_ip_config_name
+      frontend_port_name             = local.frontend_port_https_name
+      protocol                       = "Https"
+      ssl_certificate_name           = local.ssl_cert_name
+    }
+  }
+
+  # HTTP listener (redirects to HTTPS when cert is available, serves traffic otherwise)
   http_listener {
-    name                           = local.listener_name
+    name                           = local.http_listener_name
     frontend_ip_configuration_name = local.frontend_ip_config_name
-    frontend_port_name             = local.frontend_port_name
+    frontend_port_name             = local.frontend_port_http_name
     protocol                       = "Http"
   }
 
-  request_routing_rule {
-    name                       = local.request_routing_rule_name
-    priority                   = 1
-    rule_type                  = "Basic"
-    http_listener_name         = local.listener_name
-    backend_address_pool_name  = local.backend_pool_name
-    backend_http_settings_name = local.http_setting_name
+  # HTTPS routing rule (when cert is available)
+  dynamic "request_routing_rule" {
+    for_each = var.tls_certificate_secret_id != "" ? [1] : []
+    content {
+      name                       = local.https_routing_rule_name
+      priority                   = 1
+      rule_type                  = "Basic"
+      http_listener_name         = local.https_listener_name
+      backend_address_pool_name  = local.backend_pool_name
+      backend_http_settings_name = local.http_setting_name
+    }
+  }
+
+  # HTTP → HTTPS redirect (when cert is available)
+  dynamic "redirect_configuration" {
+    for_each = var.tls_certificate_secret_id != "" ? [1] : []
+    content {
+      name                 = local.redirect_config_name
+      redirect_type        = "Permanent"
+      target_listener_name = local.https_listener_name
+      include_path         = true
+      include_query_string = true
+    }
+  }
+
+  dynamic "request_routing_rule" {
+    for_each = var.tls_certificate_secret_id != "" ? [1] : []
+    content {
+      name                        = local.http_redirect_routing_rule_name
+      priority                    = 2
+      rule_type                   = "Basic"
+      http_listener_name          = local.http_listener_name
+      redirect_configuration_name = local.redirect_config_name
+    }
+  }
+
+  # Fallback: direct HTTP routing when no TLS cert is configured
+  dynamic "request_routing_rule" {
+    for_each = var.tls_certificate_secret_id == "" ? [1] : []
+    content {
+      name                       = "appgw-http-fallback-rule"
+      priority                   = 1
+      rule_type                  = "Basic"
+      http_listener_name         = local.http_listener_name
+      backend_address_pool_name  = local.backend_pool_name
+      backend_http_settings_name = local.http_setting_name
+    }
   }
 
   waf_configuration {
