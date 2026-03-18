@@ -49,3 +49,25 @@ variable "sql_administrator_password" {
   description = "SQL Server administrator password. Use Key Vault in production."
   sensitive   = true
 }
+
+variable "entra_admin_object_id" {
+  type        = string
+  description = "Object ID of the Entra ID principal for SQL Server admin."
+}
+
+variable "entra_admin_tenant_id" {
+  type        = string
+  description = "Azure AD tenant ID for the SQL Entra administrator."
+}
+
+variable "entra_admin_display_name" {
+  type        = string
+  description = "Display name of the Entra ID SQL administrator."
+  default     = "SQL Entra Admin"
+}
+
+variable "entra_auth_only" {
+  type        = bool
+  description = "When true, disables SQL password auth and enforces Entra ID only."
+  default     = false
+}

@@ -33,3 +33,13 @@ output "log_analytics_workspace_id" {
   description = "ID of the Log Analytics workspace."
   value       = azurerm_log_analytics_workspace.main.id
 }
+
+output "key_vault_uri" {
+  description = "URI of the Key Vault."
+  value       = module.keyvault.key_vault_uri
+}
+
+output "bastion_public_ip" {
+  description = "Public IP address of the Azure Bastion host."
+  value       = module.networking.bastion_public_ip_address
+}

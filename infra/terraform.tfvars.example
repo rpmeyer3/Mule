@@ -11,3 +11,9 @@ admin_ssh_public_key = "ssh-rsa AAAA..."
 
 sql_administrator_login    = "sqladmin"
 sql_administrator_password = "CHANGE_ME_USE_KEY_VAULT"
+
+# Entra ID (Azure AD) SQL Administrator
+entra_admin_object_id    = "00000000-0000-0000-0000-000000000000"
+entra_admin_tenant_id    = "00000000-0000-0000-0000-000000000000"
+entra_admin_display_name = "SQL Entra Admin"
+entra_auth_only          = false  # Set to true to disable SQL password auth

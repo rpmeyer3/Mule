@@ -28,7 +28,7 @@ resource "azurerm_log_analytics_workspace" "main" {
 }
 
 # -----------------------------------------------------------------------------
-# Networking Module  (VNet, Subnets, NSGs, Application Gateway)
+# Networking Module  (VNet, Subnets, NSGs, Application Gateway, Bastion)
 # -----------------------------------------------------------------------------
 module "networking" {
   source = "./modules/networking"
@@ -39,6 +39,10 @@ module "networking" {
   environment                = var.environment
   tags                       = local.common_tags
   log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
+
+  # HTTPS / TLS (from Key Vault)
+  appgw_identity_id         = module.keyvault.appgw_identity_id
+  tls_certificate_secret_id = module.keyvault.tls_certificate_secret_id
 }
 
 # -----------------------------------------------------------------------------
@@ -60,7 +64,24 @@ module "compute" {
 }
 
 # -----------------------------------------------------------------------------
-# Database Module  (Azure SQL with Private Endpoint)
+# Key Vault Module  (Secrets, TLS cert, Private Endpoint)
+# -----------------------------------------------------------------------------
+module "keyvault" {
+  source = "./modules/keyvault"
+
+  resource_group_name        = azurerm_resource_group.main.name
+  location                   = azurerm_resource_group.main.location
+  project_name               = var.project_name
+  environment                = var.environment
+  tags                       = local.common_tags
+  kv_subnet_id               = module.networking.kv_subnet_id
+  vnet_id                    = module.networking.vnet_id
+  sql_administrator_password = var.sql_administrator_password
+  vmss_identity_principal_id = module.compute.vmss_identity_principal_id
+}
+
+# -----------------------------------------------------------------------------
+# Database Module  (Azure SQL with Private Endpoint + Entra ID auth)
 # -----------------------------------------------------------------------------
 module "database" {
   source = "./modules/database"
@@ -75,4 +96,10 @@ module "database" {
   sql_administrator_login    = var.sql_administrator_login
   sql_administrator_password = var.sql_administrator_password
   log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
+
+  # Entra ID authentication
+  entra_admin_object_id    = var.entra_admin_object_id
+  entra_admin_tenant_id    = var.entra_admin_tenant_id
+  entra_admin_display_name = var.entra_admin_display_name
+  entra_auth_only          = var.entra_auth_only
 }
