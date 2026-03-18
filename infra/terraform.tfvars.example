@@ -1,0 +1,13 @@
+# Copy this file to terraform.tfvars and fill in the values.
+# Never commit terraform.tfvars to version control.
+
+resource_group_name  = "rg-threetier-prod"
+location             = "eastus2"
+project_name         = "threetier"
+environment          = "prod"
+
+admin_username       = "azureadmin"
+admin_ssh_public_key = "ssh-rsa AAAA..."
+
+sql_administrator_login    = "sqladmin"
+sql_administrator_password = "CHANGE_ME_USE_KEY_VAULT"
