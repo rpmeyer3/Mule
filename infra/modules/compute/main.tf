@@ -56,6 +56,10 @@ resource "azurerm_monitor_diagnostic_setting" "vmss" {
   name                       = "${var.project_name}-${var.environment}-vmss-diag"
   target_resource_id         = azurerm_linux_virtual_machine_scale_set.app.id
   log_analytics_workspace_id = var.log_analytics_workspace_id
+
+  enabled_metric {
+    category = "AllMetrics"
+  }
 }
 
 # =============================================================================
