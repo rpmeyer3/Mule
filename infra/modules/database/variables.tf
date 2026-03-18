@@ -60,3 +60,24 @@ variable "sql_max_size_gb" {
   description = "Maximum size of the SQL Database in GB."
   default     = 32
 }
+
+variable "entra_admin_object_id" {
+  type        = string
+  description = "Object ID of the Entra ID principal to set as SQL Server administrator."
+}
+
+variable "entra_admin_tenant_id" {
+  type        = string
+  description = "Tenant ID for the Entra ID administrator."
+}
+
+variable "entra_admin_display_name" {
+  type        = string
+  description = "Display name of the Entra ID SQL administrator."
+}
+
+variable "entra_auth_only" {
+  type        = bool
+  description = "When true, disables SQL password auth and requires Entra ID only."
+  default     = false
+}
