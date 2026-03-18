@@ -11,6 +11,13 @@ resource "azurerm_mssql_server" "main" {
   minimum_tls_version           = "1.2"
   public_network_access_enabled = false
   tags                          = var.tags
+
+  azuread_administrator {
+    login_username              = var.entra_admin_display_name
+    object_id                   = var.entra_admin_object_id
+    tenant_id                   = var.entra_admin_tenant_id
+    azuread_authentication_only = var.entra_auth_only
+  }
 }
 
 # =============================================================================
