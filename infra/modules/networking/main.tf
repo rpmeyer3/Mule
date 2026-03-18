@@ -317,19 +317,19 @@ resource "azurerm_public_ip" "appgw" {
 }
 
 locals {
-  appgw_name                     = "${var.project_name}-${var.environment}-appgw"
-  frontend_ip_config_name        = "appgw-frontend-ip"
-  frontend_port_http_name        = "appgw-frontend-port-http"
-  frontend_port_https_name       = "appgw-frontend-port-https"
-  backend_pool_name              = "appgw-backend-pool"
-  http_setting_name              = "appgw-http-setting"
-  https_listener_name            = "appgw-https-listener"
-  http_listener_name             = "appgw-http-listener"
-  https_routing_rule_name        = "appgw-https-routing-rule"
+  appgw_name                      = "${var.project_name}-${var.environment}-appgw"
+  frontend_ip_config_name         = "appgw-frontend-ip"
+  frontend_port_http_name         = "appgw-frontend-port-http"
+  frontend_port_https_name        = "appgw-frontend-port-https"
+  backend_pool_name               = "appgw-backend-pool"
+  http_setting_name               = "appgw-http-setting"
+  https_listener_name             = "appgw-https-listener"
+  http_listener_name              = "appgw-http-listener"
+  https_routing_rule_name         = "appgw-https-routing-rule"
   http_redirect_routing_rule_name = "appgw-http-redirect-rule"
-  redirect_config_name           = "http-to-https-redirect"
-  ssl_cert_name                  = "appgw-kv-tls-cert"
-  gateway_ip_config_name         = "appgw-gateway-ip"
+  redirect_config_name            = "http-to-https-redirect"
+  ssl_cert_name                   = "appgw-kv-tls-cert"
+  gateway_ip_config_name          = "appgw-gateway-ip"
 }
 
 resource "azurerm_application_gateway" "main" {
