@@ -51,3 +51,27 @@ variable "db_subnet_prefix" {
   description = "CIDR prefix for the db-subnet (SQL Private Endpoint)."
   default     = "10.0.3.0/24"
 }
+
+variable "kv_subnet_prefix" {
+  type        = string
+  description = "CIDR prefix for the kv-subnet (Key Vault Private Endpoint)."
+  default     = "10.0.4.0/24"
+}
+
+variable "bastion_subnet_prefix" {
+  type        = string
+  description = "CIDR prefix for AzureBastionSubnet (min /26)."
+  default     = "10.0.5.0/26"
+}
+
+variable "appgw_identity_id" {
+  type        = string
+  description = "User-Assigned Managed Identity ID for AppGW KV cert access."
+  default     = ""
+}
+
+variable "tls_certificate_secret_id" {
+  type        = string
+  description = "Key Vault secret ID for the TLS certificate."
+  default     = ""
+}

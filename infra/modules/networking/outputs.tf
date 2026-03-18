@@ -18,6 +18,16 @@ output "db_subnet_id" {
   value       = azurerm_subnet.db.id
 }
 
+output "kv_subnet_id" {
+  description = "ID of the kv-subnet (Key Vault Private Endpoint)."
+  value       = azurerm_subnet.kv.id
+}
+
+output "bastion_subnet_id" {
+  description = "ID of the AzureBastionSubnet."
+  value       = azurerm_subnet.bastion.id
+}
+
 output "appgw_public_ip_address" {
   description = "Public IP address of the Application Gateway."
   value       = azurerm_public_ip.appgw.ip_address
@@ -26,4 +36,9 @@ output "appgw_public_ip_address" {
 output "appgw_backend_address_pool_id" {
   description = "Backend address pool ID of the Application Gateway."
   value       = one(azurerm_application_gateway.main.backend_address_pool).id
+}
+
+output "bastion_public_ip_address" {
+  description = "Public IP address of Azure Bastion."
+  value       = azurerm_public_ip.bastion.ip_address
 }

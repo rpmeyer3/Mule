@@ -33,6 +33,21 @@ resource "azurerm_subnet" "db" {
   address_prefixes     = [var.db_subnet_prefix]
 }
 
+resource "azurerm_subnet" "kv" {
+  name                 = "kv-subnet"
+  resource_group_name  = var.resource_group_name
+  virtual_network_name = azurerm_virtual_network.main.name
+  address_prefixes     = [var.kv_subnet_prefix]
+}
+
+# Azure Bastion requires subnet named exactly "AzureBastionSubnet"
+resource "azurerm_subnet" "bastion" {
+  name                 = "AzureBastionSubnet"
+  resource_group_name  = var.resource_group_name
+  virtual_network_name = azurerm_virtual_network.main.name
+  address_prefixes     = [var.bastion_subnet_prefix]
+}
+
 # =============================================================================
 # Network Security Groups
 # =============================================================================
@@ -199,6 +214,21 @@ resource "azurerm_network_security_rule" "app_allow_azure_outbound" {
   destination_port_ranges     = ["443"]
   source_address_prefix       = "*"
   destination_address_prefix  = "AzureCloud"
+  resource_group_name         = var.resource_group_name
+  network_security_group_name = azurerm_network_security_group.app.name
+}
+
+# Allow outbound to Key Vault private endpoint subnet
+resource "azurerm_network_security_rule" "app_allow_to_kv_outbound" {
+  name                        = "AllowOutboundToKV"
+  priority                    = 150
+  direction                   = "Outbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "443"
+  source_address_prefix       = "*"
+  destination_address_prefix  = var.kv_subnet_prefix
   resource_group_name         = var.resource_group_name
   network_security_group_name = azurerm_network_security_group.app.name
 }
