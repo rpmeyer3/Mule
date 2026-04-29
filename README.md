@@ -16,7 +16,16 @@ A fully modular, security-hardened, three-tier web application stack on Azure �
 
 </div>
 
----
+<!-- -->
+
+## Highlights
+
+- **Engineered** a production-grade three-tier secure architecture on Azure, fully defined in modular Terraform — Application Gateway WAF v2 (web tier), Linux VMSS with autoscale (app tier), Azure SQL with Private Endpoint (data tier), and Key Vault for secrets and TLS certs.
+- **Hardened** the network with deny-all NSG baselines, private endpoints for all data-tier resources, Entra ID auth on Azure SQL, Managed Identities throughout, browser-based SSH via Azure Bastion, and centralized audit logging into a Log Analytics workspace.
+- **Built** an interactive React + TypeScript architecture explorer that visualizes every resource, connection, traffic flow, and NSG rule defined in the Terraform modules — no Azure subscription required to explore.
+- **Stack:** Terraform · AzureRM 4.x · Azure (App Gateway, VMSS, SQL, Key Vault, Bastion) · React 19 · TypeScript · Vite
+
+<!-- -->
 
 ## Architecture
 
@@ -186,7 +195,7 @@ This architecture follows Azure security best practices:
 | Private Endpoints | Eliminates public attack surface for data tier |
 | Bastion over Jump Box | Managed service; no VM to patch |
 
----
+<!-- -->
 
 <div align="center">
 

@@ -402,3 +402,6 @@ FodyWeavers.xsd
 CLAUDE.md
 /.github
 /.vscode
+
+# Claude Code
+.claude/
