@@ -10,7 +10,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
 
-A fully modular, security-hardened, three-tier web application stack on Azure — with an interactive architecture explorer built in React + TypeScript.
+A fully modular, security-hardened, three-tier web application stack on Azure, with an interactive architecture explorer built in React + TypeScript.
 
 [Explore the Architecture →](https://github.com/xsol05/dunno-yet)&nbsp;&nbsp;·&nbsp;&nbsp;[View Terraform Code →](infra/)&nbsp;&nbsp;·&nbsp;&nbsp;[Interactive App →](app/)
 
@@ -20,9 +20,9 @@ A fully modular, security-hardened, three-tier web application stack on Azure �
 
 ## Highlights
 
-- **Engineered** a production-grade three-tier secure architecture on Azure, fully defined in modular Terraform — Application Gateway WAF v2 (web tier), Linux VMSS with autoscale (app tier), Azure SQL with Private Endpoint (data tier), and Key Vault for secrets and TLS certs.
+- **Engineered** a production-grade three-tier secure architecture on Azure, fully defined in modular Terraform: Application Gateway WAF v2 (web tier), Linux VMSS with autoscale (app tier), Azure SQL with Private Endpoint (data tier), and Key Vault for secrets and TLS certs.
 - **Hardened** the network with deny-all NSG baselines, private endpoints for all data-tier resources, Entra ID auth on Azure SQL, Managed Identities throughout, browser-based SSH via Azure Bastion, and centralized audit logging into a Log Analytics workspace.
-- **Built** an interactive React + TypeScript architecture explorer that visualizes every resource, connection, traffic flow, and NSG rule defined in the Terraform modules — no Azure subscription required to explore.
+- **Built** an interactive React + TypeScript architecture explorer that visualizes every resource, connection, traffic flow, and NSG rule defined in the Terraform modules, with no Azure subscription required to explore.
 - **Stack:** Terraform · AzureRM 4.x · Azure (App Gateway, VMSS, SQL, Key Vault, Bastion) · React 19 · TypeScript · Vite
 
 <!-- -->
@@ -169,7 +169,7 @@ npm run dev
 
 > [!TIP]
 > The interactive explorer visualizes every resource, connection, traffic flow, and NSG rule defined
-> in the Terraform modules — no Azure subscription required to explore the architecture.
+> in the Terraform modules. No Azure subscription is required to explore the architecture.
 
 ## Security Posture
 
@@ -177,10 +177,10 @@ This architecture follows Azure security best practices:
 
 - **Zero public endpoints** on data-tier resources (SQL + Key Vault via Private Endpoints)
 - **WAF in Prevention mode** with OWASP Core Rule Set 3.2
-- **Deny-all NSG baseline** — only explicitly required traffic is allowed
+- **Deny-all NSG baseline**: only explicitly required traffic is allowed
 - **Entra ID authentication** for Azure SQL (password auth can be fully disabled)
-- **Managed Identities** — no credentials stored in code or config
-- **Key Vault with RBAC** — no legacy vault access policies
+- **Managed Identities**: no credentials stored in code or config
+- **Key Vault with RBAC**: no legacy vault access policies
 - **TLS 1.2 minimum** enforced across all services
 - **Audit logging** to centralized Log Analytics workspace
 
