@@ -33,7 +33,7 @@ A fully modular, security-hardened, three-tier web application stack on Azure, w
 graph TD
     Internet((Internet)):::external -->|HTTPS 443| AppGw
 
-    subgraph VNet["Azure Virtual Network — 10.0.0.0/16"]
+    subgraph VNet["Azure Virtual Network: 10.0.0.0/16"]
         subgraph web["web-subnet · 10.0.1.0/24"]
             AppGw[Application Gateway\nWAF v2 · OWASP 3.2]:::web
         end
